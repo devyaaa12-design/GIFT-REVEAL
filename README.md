@@ -12,6 +12,7 @@ No sign-in, no backend — everything runs locally and is saved to your browser 
 - **Full editing** — drag to move, corner handles to resize, top handle to rotate (with 45° snapping). Recolor with swatches or a custom color picker, and enter exact width/height/rotation values.
 - **Layering** — bring furniture to the front or send it to the back.
 - **Multiple design plans** — create several named layouts (Plan A, Plan B, …) over the *same* floor plan and switch between them to compare. Duplicate a plan to iterate on a variation.
+- **Inspiration board** — upload reference/mood-board photos (room shots, color palettes, design ideas), browse them in a gallery, and open any one full-screen in a lightbox with keyboard navigation. Images are downscaled automatically before saving so they don't blow the storage quota.
 - **Auto-save** — your floor plan and every plan are persisted to `localStorage`, so your work is still there when you come back.
 - **Export** — download the current plan as a high-resolution PNG.
 
@@ -37,7 +38,8 @@ npm run preview
 2. Pick a category on the left, then click furniture to drop it onto the plan.
 3. Select any piece to move, resize, rotate, recolor, or delete it.
 4. Use the **plan tabs** at the top to create and compare alternative layouts. Double-click a tab to rename it.
-5. Click **Export PNG** to save the design.
+5. Click **Inspiration** in the top bar to upload reference pictures and browse them in a gallery / lightbox while you design.
+6. Click **Export PNG** to save the design.
 
 ### Keyboard shortcuts
 

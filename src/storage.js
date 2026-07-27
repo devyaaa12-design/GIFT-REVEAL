@@ -24,6 +24,16 @@ export function saveState(state) {
   }
 }
 
+// Ensure a loaded state has every field the current app version expects,
+// so projects saved by earlier versions keep working.
+export function normalizeState(state) {
+  if (!state || typeof state !== 'object') return state
+  return {
+    ...state,
+    inspiration: Array.isArray(state.inspiration) ? state.inspiration : [],
+  }
+}
+
 // Simple unique id without external deps.
 export function uid(prefix = 'id') {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}${(performance.now() | 0).toString(36)}`

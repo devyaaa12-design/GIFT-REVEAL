@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react'
 import DesignCanvas from './DesignCanvas'
 import PaletteThumb from './PaletteThumb'
+import InspirationBoard from './InspirationBoard'
 import { CATEGORIES, FURNITURE, FURNITURE_BY_ID } from './furniture'
-import { loadState, saveState, uid } from './storage'
+import { loadState, saveState, uid, normalizeState } from './storage'
+import { downscaleImage } from './image'
 
 const SWATCHES = [
   '#7c8aa5', '#8d7b9c', '#a5846a', '#9c6f47', '#8a5a34',
@@ -17,15 +19,18 @@ function makeDefaultState() {
     showGrid: false,
     activePlanId: 'plan_1',
     plans: [{ id: 'plan_1', name: 'Plan A', items: [] }],
+    inspiration: [],
   }
 }
 
 export default function App() {
-  const [state, setState] = useState(() => loadState() || makeDefaultState())
+  const [state, setState] = useState(() => normalizeState(loadState()) || makeDefaultState())
   const [selectedId, setSelectedId] = useState(null)
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].id)
   const [canvasSize, setCanvasSize] = useState({ w: 800, h: 600 })
   const [savedFlash, setSavedFlash] = useState(false)
+  const [inspoOpen, setInspoOpen] = useState(false)
+  const [inspoBusy, setInspoBusy] = useState(false)
 
   const canvasWrapRef = useRef(null)
   const stageRef = useRef(null)
@@ -170,6 +175,42 @@ export default function App() {
     setState((s) => ({ ...s, floorPlanUrl: null, floorPlanName: null }))
   }
 
+  // ---- inspiration images ----
+  async function addInspiration(files) {
+    setInspoBusy(true)
+    const added = []
+    for (const file of files) {
+      try {
+        const url = await downscaleImage(file)
+        added.push({ id: uid('insp'), name: file.name.replace(/\.[^.]+$/, ''), url })
+      } catch (err) {
+        console.warn('Skipped an image:', file.name, err)
+      }
+    }
+    if (added.length) {
+      // Try to save; if the quota is exceeded, roll back and warn.
+      let rejected = false
+      setState((s) => {
+        const next = { ...s, inspiration: [...s.inspiration, ...added] }
+        if (!saveState(next)) {
+          rejected = true
+          return s
+        }
+        return next
+      })
+      if (rejected) {
+        alert(
+          'Not enough browser storage to save these images. Try removing some inspiration pictures or using smaller files.',
+        )
+      }
+    }
+    setInspoBusy(false)
+  }
+
+  function removeInspiration(id) {
+    setState((s) => ({ ...s, inspiration: s.inspiration.filter((img) => img.id !== id) }))
+  }
+
   // ---- plan management ----
   function addPlan(clone = false) {
     const letter = String.fromCharCode(65 + state.plans.length)
@@ -239,6 +280,16 @@ export default function App() {
         onChange={onFileChange}
       />
 
+      {inspoOpen && (
+        <InspirationBoard
+          images={state.inspiration}
+          onAdd={addInspiration}
+          onRemove={removeInspiration}
+          onClose={() => setInspoOpen(false)}
+          busy={inspoBusy}
+        />
+      )}
+
       {/* Top bar */}
       <header className="topbar">
         <div className="brand">
@@ -273,6 +324,16 @@ export default function App() {
 
         <div className="topbar-actions">
           <span className={`save-flash ${savedFlash ? 'show' : ''}`}>Saved</span>
+          <button
+            className="btn"
+            onClick={() => setInspoOpen(true)}
+            title="Upload and browse inspiration pictures"
+          >
+            Inspiration
+            {state.inspiration.length > 0 && (
+              <span className="count-badge">{state.inspiration.length}</span>
+            )}
+          </button>
           <button className="btn" onClick={() => addPlan(true)} title="Duplicate current plan">
             Duplicate plan
           </button>
